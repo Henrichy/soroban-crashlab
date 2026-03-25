@@ -28,6 +28,12 @@ pub use env_fingerprint::{
 pub mod boundary;
 pub use boundary::{BoundaryMutator, generate_boundary_vectors};
 
+pub mod bundle_persist;
+pub use bundle_persist::{
+    read_case_bundle_json, save_case_bundle_json, write_case_bundle_json, BundlePersistError,
+    CaseBundleDocument, CASE_BUNDLE_SCHEMA_VERSION, SUPPORTED_BUNDLE_SCHEMAS,
+};
+
 /// Wrapper for the legacy bit-flipper mutation logic.
 pub struct DefaultMutator;
 
@@ -41,15 +47,15 @@ impl Mutator for DefaultMutator {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct CaseSeed {
     pub id: u64,
     pub payload: Vec<u8>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct CrashSignature {
-    pub category: &'static str,
+    pub category: String,
     pub digest: u64,
     /// Stable hash derived solely from `category` and payload bytes.
     ///
@@ -80,6 +86,8 @@ pub struct CaseBundle {
     pub signature: CrashSignature,
     /// Host environment captured when the bundle was produced, if enabled.
     pub environment: Option<EnvironmentFingerprint>,
+    /// Raw failure output (stderr, host error bytes, trace snippet, etc.).
+    pub failure_payload: Vec<u8>,
 }
 
 impl CaseBundle {
@@ -122,7 +130,7 @@ pub fn classify(seed: &CaseSeed) -> CrashSignature {
     let signature_hash = compute_signature_hash(category, &seed.payload);
 
     CrashSignature {
-        category,
+        category: category.to_string(),
         digest,
         signature_hash,
     }
@@ -135,6 +143,7 @@ pub fn to_bundle(seed: CaseSeed) -> CaseBundle {
         seed: mutated,
         signature,
         environment: None,
+        failure_payload: Vec::new(),
     }
 }
 
@@ -147,6 +156,7 @@ pub fn to_bundle_with_environment(seed: CaseSeed) -> CaseBundle {
         seed: mutated,
         signature,
         environment,
+        failure_payload: Vec::new(),
     }
 }
 
