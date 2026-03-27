@@ -40,6 +40,9 @@ pub use bundle_persist::{
     CaseBundleDocument, CASE_BUNDLE_SCHEMA_VERSION, SUPPORTED_BUNDLE_SCHEMAS,
 };
 
+pub mod artifact_compress;
+pub use artifact_compress::{compress_artifact, decompress_artifact};
+
 pub mod fixture_compat;
 pub use fixture_compat::{CompatReport, CompatWarning, check_bundle_fixtures, check_seed_fixtures};
 
