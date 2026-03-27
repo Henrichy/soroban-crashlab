@@ -68,6 +68,9 @@ pub use container_stress::{
     generate_container_stress_grid, ContainerStressConfig, ContainerStressMutator,
 };
 
+pub mod stale_detector;
+pub use stale_detector::{StaleDetectorConfig, StaleRunDetector, StaleStatus};
+
 pub mod run_control;
 pub use run_control::{
     CancelSignal, RunId, RunSummary, RunTerminalState, cancel_marker_path, cancel_requested,
